@@ -32,12 +32,40 @@ Adding a project: add a line to `src/projects.js`, add the repo to the token's a
 
 Changing the passcode: `npx wrangler secret put PASSCODE`. To kick everyone out too, also rotate `SESSION_SECRET`.
 
+## Auto-deploy (optional)
+
+`.github/workflows/ci.yml` runs the tests on every push and PR. Pushes to `main` also deploy, once these repo secrets exist:
+
+- `CLOUDFLARE_API_TOKEN`: a Cloudflare API token from the "Edit Cloudflare Workers" template
+- `CLOUDFLARE_ACCOUNT_ID`: shown on the Workers dashboard sidebar
+
+Without them the deploy job just skips. The Worker secrets (`GITHUB_TOKEN`, `PASSCODE`, `SESSION_SECRET`) still get set once with `wrangler secret put`; deploys don't touch them.
+
 ## Local dev
 
 ```sh
 printf 'PASSCODE=dev\nSESSION_SECRET=dev\nGITHUB_TOKEN=<token>\n' > .dev.vars
 npm run dev     # http://localhost:8787
 npm test        # unit tests against a fake GitHub API
+```
+
+## Security notes
+
+- The GitHub token only lives in Cloudflare secrets. Scope it to the listed repos; the Worker also refuses any project not in `src/projects.js`.
+- One shared passcode means anyone you give it to can file issues. That's the point. If it leaks, rotate `PASSCODE` and `SESSION_SECRET`.
+- Cookies are `HttpOnly`, `Secure`, `SameSite=Lax`, and cross-origin POSTs are rejected.
+- Uploads are limited to images (png, jpg, gif, webp, heic), 8 MB each, 6 per report. Tune in `src/projects.js`.
+- Screenshots are as visible as the repo they land in. On a public repo (latent, sift) they're public.
+
+## Layout
+
+```
+src/index.js     routes, validation, issue body
+src/github.js    GitHub REST calls (orphan branch, uploads, issues)
+src/auth.js      passcode check + signed session cookie
+src/page.js      the HTML for login + form (no build step)
+src/projects.js  project list, labels, limits
+test/            node:test suite with a fake GitHub API
 ```
 
 ## Picking up issues
