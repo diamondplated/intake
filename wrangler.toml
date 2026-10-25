@@ -1,0 +1,9 @@
+name = "intake"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Secrets (set with `npx wrangler secret put <NAME>`):
+#   PASSCODE        what Emily types to get in
+#   SESSION_SECRET  long random string that signs the login cookie
+#   GITHUB_TOKEN    fine-grained PAT, Issues + Contents read/write on the repos in src/projects.js
